@@ -1,0 +1,41 @@
+# .github/workflows/pr.yml — commerce-web
+# PR 검사 전용입니다. permissions 가 contents: read 하나뿐이라 OIDC 토큰을 받을 수 없고,
+# 따라서 AWS · ECR · 클러스터에 닿을 수 없습니다. 이미지는 빌드만 하고 push 하지 않습니다.
+name: pr
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: prettier and build
+        run: |
+          docker run --rm -v "$PWD:/app" -w /app node:22-alpine sh -euc '
+            corepack enable
+            pnpm install --frozen-lockfile
+            pnpm prettier:check
+            SITE_NAME=Commerce COMPANY_NAME="Commerce Inc." \
+              MEDUSA_BACKEND_URL=http://127.0.0.1:9 \
+              MEDUSA_PUBLISHABLE_KEY=pk_build_only \
+              pnpm build
+          '
+  image:
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: docker build only
+        run: docker build -t "commerce-web:pr-${{ github.event.pull_request.number }}" .

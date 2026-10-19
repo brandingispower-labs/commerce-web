@@ -1,0 +1,2 @@
+# 설치 도구가 다시 쓰는 파일이라 형식 검사 대상에서 뺍니다 (pnpm install 이 prettier 와 다른 방식으로 정렬합니다).
+pnpm-lock.yaml

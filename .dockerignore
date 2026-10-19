@@ -1,0 +1,15 @@
+node_modules
+.next
+.git
+.github
+.env
+.env.*
+.vercel
+.DS_Store
+Dockerfile
+.dockerignore
+README.md
+license.md
+npm-debug.log*
+.pnpm-debug.log*
+*.tsbuildinfo
